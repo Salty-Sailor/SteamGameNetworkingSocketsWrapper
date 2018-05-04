@@ -1,0 +1,11 @@
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/bin/Debug/netcoreapp2.0/SteamWrapper.deps.json
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/bin/Debug/netcoreapp2.0/SteamWrapper.runtimeconfig.json
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/bin/Debug/netcoreapp2.0/SteamWrapper.runtimeconfig.dev.json
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/bin/Debug/netcoreapp2.0/SteamWrapper.dll
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/bin/Debug/netcoreapp2.0/SteamWrapper.pdb
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/obj/Debug/netcoreapp2.0/SteamWrapper.csprojResolveAssemblyReference.cache
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/obj/Debug/netcoreapp2.0/SteamWrapper.csproj.CoreCompileInputs.cache
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/obj/Debug/netcoreapp2.0/SteamWrapper.AssemblyInfoInputs.cache
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/obj/Debug/netcoreapp2.0/SteamWrapper.AssemblyInfo.cs
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/obj/Debug/netcoreapp2.0/SteamWrapper.dll
+/Users/xlt/Projects/SteamWrapper/SteamWrapper/obj/Debug/netcoreapp2.0/SteamWrapper.pdb
