@@ -1,6 +1,6 @@
 # SteamGameNetworkingSocketsWrapper
 ## What it is
-A C# Wrapper of the SteamGameNetworkingSockets(https://github.com/ValveSoftware/GameNetworkingSockets),now only support on MacOS. However I have done some changes in the SteamGameNetworkingSockets lib so that I can use the wrapper more easily and conveniently.
+A C# Wrapper of the SteamGameNetworkingSockets(https://github.com/ValveSoftware/GameNetworkingSockets) ,now only support on MacOS. However I have done some changes in the SteamGameNetworkingSockets lib so that I can use the wrapper more easily and conveniently.
 I have forked the lib from the source repo of ValveSoftware, so you can track my SteamGameNetworkingSockets lib in https://github.com/Salty-Sailor/GameNetworkingSockets
 
 ## How it works
