@@ -51,7 +51,12 @@ namespace SteamNetworkingSockets
         public NetworkManager()
         {
             Steam.GameNetworkingSockets_Init( ref initRs );
-            Console.WriteLine( "Init Steam GameNetworkingSockets:{0}", initRs );
+            if( initRs.Length > 0 )
+            {
+                Console.WriteLine( "Init Steam GameNetworkingSockets Err:{0}", initRs );
+                return;
+            }
+            
             Conns = new Dictionary<HSteamNetConnection, Connection>();
             UserSocket = Steam.NewSockets();
             GameServerSocket = Steam.NewSocketsGameServer();
@@ -105,7 +110,9 @@ namespace SteamNetworkingSockets
 
         #endregion
 
-        public EResult SendMessage( HSteamNetConnection hConn, byte[] pData, uint cbData, int sendType )
+        #region MessageHandle
+
+        public EResult SendMessage( HSteamNetConnection hConn, byte[] pData, uint cbData, ESteamNetworkingSendType sendType )
         {
             IntPtr unmanagedPointer = Marshal.AllocHGlobal( pData.Length );
             Marshal.Copy( pData, 0, unmanagedPointer, pData.Length );
@@ -113,8 +120,6 @@ namespace SteamNetworkingSockets
             Marshal.FreeHGlobal( unmanagedPointer );
             return rs;
         }
-
-        private const int MessagesLength = 56; //Bytes
 
         public List<byte[]> ReceiveMessagesOnListenSocket( HSteamListenSocket hConn, int nMaxMessages = 100 )
         {
@@ -143,7 +148,9 @@ namespace SteamNetworkingSockets
             }
             return rs;
         }
-
+        
+        #endregion
+        
         public HSteamListenSocket ListenSocket( int nSteamConnectVirtualPort, uint nIP, ushort nPort )
         {
             return Steam.CreateListenSocket( UserSocket, nSteamConnectVirtualPort, nIP, nPort );
@@ -154,7 +161,7 @@ namespace SteamNetworkingSockets
             HSteamNetConnection conId = Steam.ConnectByIPv4Address( UserSocket, nIP, nPort );
             return conId;
         }
-
+       
         public void Tick()
         {
             Steam.TickCallBacks( UserSocket );

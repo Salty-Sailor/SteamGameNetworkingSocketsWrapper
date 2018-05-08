@@ -178,7 +178,7 @@ namespace SteamNetworkingSockets
             Constants.k_nSteamNetworkingSendFlags_Reliable | Constants.k_nSteamNetworkingSendFlags_NoNagle,
     }
 
-    public static class Constants
+    static class Constants
     {
         public const int k_HSteamNetConnection_Invalid = 0;
         public const int k_nSteamNetworkingSendFlags_NoNagle = 1;

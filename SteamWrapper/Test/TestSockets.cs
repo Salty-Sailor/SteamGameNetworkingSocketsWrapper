@@ -17,9 +17,9 @@ namespace SteamWrapper.Test
             
             string sendMsgFmt = "test msg {0} send by client";
             var index = 0;
-            
+            var loop = true;
             //update loop
-            while( true )
+            while( loop )
             {               
                 m.Tick();               
                 for(int i =0; i< 10;i++)
@@ -27,10 +27,11 @@ namespace SteamWrapper.Test
                     var msg = String.Format( sendMsgFmt, index );
                     byte[] transportData = System.Text.Encoding.Default.GetBytes(msg);
                     var rsa = m.SendMessage( clientConnectId, transportData, (uint)transportData.Length,
-                                             Constants.k_nSteamNetworkingSendFlags_Reliable );
+                                             ESteamNetworkingSendType.k_ESteamNetworkingSendType_Reliable );
                     if( rsa != EResult.k_EResultOK )
                     {
                         Console.WriteLine( "loop break, reason:{0}", rsa );
+                        loop = false;
                         break;
                     }
                     index++;
@@ -38,14 +39,13 @@ namespace SteamWrapper.Test
 
                 var datas = m.ReceiveMessagesOnListenSocket( listenSocketId );
                 Console.WriteLine("recieve data num:{0}", datas.Count);
-                foreach(var data in datas)
+                for(int i=0;i<datas.Count;i++)
                 {
-                    Console.WriteLine("recieve data:{0}", System.Text.Encoding.UTF8.GetString(data));    
+                    Console.WriteLine("recieve data[{0}]:{1}", i, System.Text.Encoding.UTF8.GetString(datas[i]));    
                 }  
-                Thread.Sleep( 100 );
-                
+                Thread.Sleep( 100 );             
             }
-            
+            m.Release();
             Console.ReadLine();
         }
     }

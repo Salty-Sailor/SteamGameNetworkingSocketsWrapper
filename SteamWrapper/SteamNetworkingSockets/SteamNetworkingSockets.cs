@@ -50,7 +50,7 @@ namespace SteamNetworkingSockets
         public static extern void GetConnectionName(HSteamNetConnection hPeer, ref string pszName, int nMaxLen);
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_SendMessageToConnection", ThrowOnUnmappableChar = true)]
-        public static extern EResult SendMessageToConnection(HSteamNetConnection hConn, IntPtr pData, uint cbData, int sendType);
+        public static extern EResult SendMessageToConnection(HSteamNetConnection hConn, IntPtr pData, uint cbData, ESteamNetworkingSendType sendType);
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_FlushMessagesOnConnection", ThrowOnUnmappableChar = true)]
         public static extern EResult FlushMessagesOnConnection(HSteamNetConnection hConn);
