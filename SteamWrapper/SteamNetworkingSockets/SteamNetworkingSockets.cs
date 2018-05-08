@@ -5,10 +5,13 @@ using SteamNetworkingMicroseconds = System.Int64;
 using HSteamNetConnection = System.UInt32;
 namespace SteamNetworkingSockets
 {
-    public static partial class Sockets
+    public static class Steam
     {
         [DllImport("libGameNetworkingSockets", EntryPoint = "GameNetworkingSockets_Init", ThrowOnUnmappableChar = true)]
         public static extern bool GameNetworkingSockets_Init(ref string reason);
+
+        [DllImport("libGameNetworkingSockets", EntryPoint = "GameNetworkingSockets_Kill", ThrowOnUnmappableChar = true)]
+        public static extern void GameNetworkingSockets_Kill();
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_GetLocalTimestamp", ThrowOnUnmappableChar = true)]
         public static extern SteamNetworkingMicroseconds GetLocalTimestamp();
@@ -16,6 +19,9 @@ namespace SteamNetworkingSockets
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets", ThrowOnUnmappableChar = true)]
         public static extern IntPtr NewSockets();
 
+        [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSocketsGameServer", ThrowOnUnmappableChar = true)]
+        public static extern IntPtr NewSocketsGameServer();
+        
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_CreateListenSocket", ThrowOnUnmappableChar = true)]
         public static extern HSteamListenSocket CreateListenSocket(IntPtr ptr, int nSteamConnectVirtualPort, uint nIP, ushort nPort);
 
@@ -44,16 +50,16 @@ namespace SteamNetworkingSockets
         public static extern void GetConnectionName(HSteamNetConnection hPeer, ref string pszName, int nMaxLen);
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_SendMessageToConnection", ThrowOnUnmappableChar = true)]
-        public static extern EResult SendMessageToConnection(HSteamNetConnection hConn, IntPtr pData, uint cbData, ESteamNetworkingSendType sendType);
+        public static extern EResult SendMessageToConnection(HSteamNetConnection hConn, IntPtr pData, uint cbData, int sendType);
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_FlushMessagesOnConnection", ThrowOnUnmappableChar = true)]
         public static extern EResult FlushMessagesOnConnection(HSteamNetConnection hConn);
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_ReceiveMessagesOnConnection", ThrowOnUnmappableChar = true)]
-        public static extern int ReceiveMessagesOnConnection(HSteamNetConnection hConn, ref IntPtr ppOutMessages, int nMaxMessages);
+        public static extern int ReceiveMessagesOnConnection(HSteamNetConnection hConn, IntPtr ppOutMessages, int nMaxMessages);
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_ReceiveMessagesOnListenSocket", ThrowOnUnmappableChar = true)]
-        public static extern int ReceiveMessagesOnListenSocket(HSteamListenSocket hConn, ref IntPtr ppOutMessages, int nMaxMessages);
+        public static extern int ReceiveMessagesOnListenSocket(HSteamListenSocket hConn, IntPtr ppOutMessages, int nMaxMessages);
 
         [DllImport("libGameNetworkingSockets", EntryPoint = "SteamNetworkingSockets_GetConnectionInfo", ThrowOnUnmappableChar = true)]
         public static extern bool GetConnectionInfo(HSteamNetConnection hConn, IntPtr pInfo);
@@ -93,5 +99,20 @@ namespace SteamNetworkingSockets
         public static extern HSteamNetConnection HandleConnectionConnected();
         
         #endregion
+        
+        #region message handler
+        
+        [DllImport( "libGameNetworkingSockets", EntryPoint = "GetMessageSize", ThrowOnUnmappableChar = true )]
+        public static extern uint GetMessageSize(IntPtr ptrTomessage);
+        
+        [DllImport( "libGameNetworkingSockets", EntryPoint = "GetMessagePayLoad", ThrowOnUnmappableChar = true )]
+        public static extern IntPtr GetMessagePayLoad(IntPtr ptrTomessage);
+        
+        [DllImport( "libGameNetworkingSockets", EntryPoint = "ReleaseMessage", ThrowOnUnmappableChar = true )]
+        public static extern void ReleaseMessage(IntPtr ptrTomessage);
+        
+        #endregion
     }
+
+   
 }

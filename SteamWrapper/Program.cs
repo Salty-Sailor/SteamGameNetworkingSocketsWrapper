@@ -8,7 +8,7 @@ namespace SteamWrapper
     {
         static void Main()
         {
-            TestSockets.SimpleTest();
+            TestSteam.ManagerTest();
         }
     }
 }
