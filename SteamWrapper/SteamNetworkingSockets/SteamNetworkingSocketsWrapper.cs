@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
-using Microsoft.VisualBasic.CompilerServices;
 using HSteamListenSocket = System.UInt32;
 using SteamNetworkingMicroseconds = System.Int64;
 using HSteamNetConnection = System.UInt32;
@@ -38,6 +35,7 @@ namespace SteamNetworkingSockets
     public class NetworkManager
     {
         private Dictionary<HSteamNetConnection, Connection> Conns;
+
         //Just keep same with the SteamNetworkingSocketslib, still thinking about how to use them
         public IntPtr UserSocket;
         public IntPtr GameServerSocket;
@@ -47,7 +45,7 @@ namespace SteamNetworkingSockets
 
         //temporary set this max number
         private static int MaxMessages = 1000 * 1000;
-        
+
         public NetworkManager()
         {
             Steam.GameNetworkingSockets_Init( ref initRs );
@@ -56,7 +54,7 @@ namespace SteamNetworkingSockets
                 Console.WriteLine( "Init Steam GameNetworkingSockets Err:{0}", initRs );
                 return;
             }
-            
+
             Conns = new Dictionary<HSteamNetConnection, Connection>();
             UserSocket = Steam.NewSockets();
             GameServerSocket = Steam.NewSocketsGameServer();
@@ -66,9 +64,9 @@ namespace SteamNetworkingSockets
         public void Release()
         {
             Steam.GameNetworkingSockets_Kill();
-            Marshal.AllocHGlobal(messageBuffer);
+            Marshal.AllocHGlobal( messageBuffer );
         }
-        
+
         #region Connections CRUD
 
         public bool RemoveConnection( HSteamNetConnection id )
@@ -121,13 +119,16 @@ namespace SteamNetworkingSockets
             return rs;
         }
 
-        public List<byte[]> ReceiveMessagesOnListenSocket( HSteamListenSocket hConn, int nMaxMessages = 100 )
+        public List<byte[]> ReceiveMessagesOnConnection( HSteamNetConnection hConn, int nMaxMessages = 100 )
         {
+            nMaxMessages = nMaxMessages > MaxMessages ? MaxMessages : nMaxMessages;
             var rs = new List<byte[]>();
-            int num = Steam.ReceiveMessagesOnListenSocket( hConn, messageBuffer, nMaxMessages );            
+            int num = Steam.ReceiveMessagesOnConnection( hConn, messageBuffer, nMaxMessages );
+            var ptr = messageBuffer.ToInt64();
             for( int i = 0; i < num; i++ )
             {
-                IntPtr messagePtr = IntPtr.Add( messageBuffer, IntPtr.Size * i );
+                //unity C# version is too low to have Add() method, use this to replace
+                IntPtr messagePtr = (IntPtr)(ptr + IntPtr.Size * i);
                 int size = (int)Steam.GetMessageSize( messagePtr );
                 if( size == 0 )
                 {
@@ -136,21 +137,56 @@ namespace SteamNetworkingSockets
                 }
 
                 IntPtr unManagedData = Steam.GetMessagePayLoad( messagePtr );
-                if(unManagedData == IntPtr.Zero)
+                if( unManagedData == IntPtr.Zero )
                 {
                     Steam.ReleaseMessage( messagePtr );
                     continue;
                 }
+
                 byte[] data = new byte[size];
                 Marshal.Copy( unManagedData, data, 0, size );
                 Steam.ReleaseMessage( messagePtr );
-                rs.Add( data );              
+                rs.Add( data );
             }
+
             return rs;
         }
-        
+
+        public List<byte[]> ReceiveMessagesOnListenSocket( HSteamListenSocket hSocket, int nMaxMessages = 100 )
+        {
+            nMaxMessages = nMaxMessages > MaxMessages ? MaxMessages : nMaxMessages;
+            var rs = new List<byte[]>();
+            int num = Steam.ReceiveMessagesOnListenSocket( hSocket, messageBuffer, nMaxMessages );
+            var ptr = messageBuffer.ToInt64();
+            for( int i = 0; i < num; i++ )
+            {
+                //unity C# version is too low to have Add() method, use this to replace
+                IntPtr messagePtr = (IntPtr)(ptr + IntPtr.Size * i);
+                int size = (int)Steam.GetMessageSize( messagePtr );
+                if( size == 0 )
+                {
+                    Steam.ReleaseMessage( messagePtr );
+                    continue;
+                }
+
+                IntPtr unManagedData = Steam.GetMessagePayLoad( messagePtr );
+                if( unManagedData == IntPtr.Zero )
+                {
+                    Steam.ReleaseMessage( messagePtr );
+                    continue;
+                }
+
+                byte[] data = new byte[size];
+                Marshal.Copy( unManagedData, data, 0, size );
+                Steam.ReleaseMessage( messagePtr );
+                rs.Add( data );
+            }
+
+            return rs;
+        }
+
         #endregion
-        
+
         public HSteamListenSocket ListenSocket( int nSteamConnectVirtualPort, uint nIP, ushort nPort )
         {
             return Steam.CreateListenSocket( UserSocket, nSteamConnectVirtualPort, nIP, nPort );
@@ -161,7 +197,7 @@ namespace SteamNetworkingSockets
             HSteamNetConnection conId = Steam.ConnectByIPv4Address( UserSocket, nIP, nPort );
             return conId;
         }
-       
+
         public void Tick()
         {
             Steam.TickCallBacks( UserSocket );
