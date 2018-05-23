@@ -1,5 +1,5 @@
 ﻿using HSteamNetConnection = System.UInt32;
-
+using System.Text; 
 namespace SteamNetworkingSockets
 {
     public enum EResult
@@ -185,4 +185,5 @@ namespace SteamNetworkingSockets
         public const int k_nSteamNetworkingSendFlags_NoDelay = 2;
         public const int k_nSteamNetworkingSendFlags_Reliable = 8;
     }
+    
 }

@@ -9,44 +9,47 @@ namespace SteamWrapper.Test
         static uint nConnectIP = 0x7f000001;//127.0.0.1
         static ushort nPort = 27200;
 
-        public static void ManagerTest()
+        public static void TestServer()
         {
-            NetworkManager m = new NetworkManager();
+            NetworkManager m = new NetworkManager(false, true);
             var listenSocketId = m.ListenSocket(-1, 0, nPort);
-            var clientConnectId = m.Connect( nConnectIP, nPort );
-            
+            var loop = true;
+            while( loop )
+            {
+                m.Tick();
+                m.ProcessPacket();
+                Thread.Sleep( 100 );
+            }
+        }
+               
+        public static void TestClient()
+        {
+            NetworkManager m = new NetworkManager(true, false);
+            var clientConn = m.Connect( nConnectIP, nPort );
             string sendMsgFmt = "test msg {0} send by client";
             var index = 0;
             var loop = true;
             //update loop
             while( loop )
-            {               
+            {
                 m.Tick();               
                 for(int i =0; i< 10;i++)
                 {
                     var msg = String.Format( sendMsgFmt, index );
                     byte[] transportData = System.Text.Encoding.Default.GetBytes(msg);
-                    var rsa = m.SendMessage( clientConnectId, transportData, (uint)transportData.Length,
-                                             ESteamNetworkingSendType.k_ESteamNetworkingSendType_Reliable );
-                    if( rsa != EResult.k_EResultOK )
+                    Console.WriteLine( "Send:{0}", msg );
+                    if( !clientConn.Send( transportData ) )
                     {
-                        Console.WriteLine( "loop break, reason:{0}", rsa );
+                        Console.WriteLine( "conn send fail" );
                         loop = false;
-                        break;
                     }
+                    
                     index++;
                 }
-
-                var datas = m.ReceiveMessagesOnListenSocket( listenSocketId );
-                Console.WriteLine("recieve data num:{0}", datas.Count);
-                for(int i=0;i<datas.Count;i++)
-                {
-                    Console.WriteLine("recieve data[{0}]:{1}", i, System.Text.Encoding.UTF8.GetString(datas[i]));    
-                }  
-                Thread.Sleep( 100 );             
+                
+                Thread.Sleep( 100 );      
             }
-            m.Release();
-            Console.ReadLine();
         }
+        
     }
 }

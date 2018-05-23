@@ -7,46 +7,26 @@ using HSteamNetConnection = System.UInt32;
 
 namespace SteamNetworkingSockets
 {
-    public class Connection
-    {
-        private HSteamNetConnection _Id;
-
-        public HSteamNetConnection Id
-        {
-            get { return _Id; }
-        }
-
-        private bool _IsConnected;
-
-        public bool IsConnected
-        {
-            set { _IsConnected = value; }
-
-            get { return _IsConnected; }
-        }
-
-        public Connection( HSteamNetConnection id )
-        {
-            _Id = id;
-            _IsConnected = false;
-        }
-    }
-
     public class NetworkManager
     {
         private Dictionary<HSteamNetConnection, Connection> Conns;
+        private LocalConnection localConn;
 
         //Just keep same with the SteamNetworkingSocketslib, still thinking about how to use them
-        public IntPtr UserSocket;
-        public IntPtr GameServerSocket;
+        private IntPtr UserSocket;
+
+        //public IntPtr GameServerSocket;
+        private bool isClient;
+        private bool isServer;
 
         private string initRs = "";
         private IntPtr messageBuffer;
+        private IntPtr oneMessageBuffer;
 
         //temporary set this max number
         private static int MaxMessages = 1000 * 1000;
 
-        public NetworkManager()
+        public NetworkManager( bool isClient, bool isServer )
         {
             Steam.GameNetworkingSockets_Init( ref initRs );
             if( initRs.Length > 0 )
@@ -55,34 +35,48 @@ namespace SteamNetworkingSockets
                 return;
             }
 
+            this.isClient = isClient;
+            this.isServer = isServer;
             Conns = new Dictionary<HSteamNetConnection, Connection>();
             UserSocket = Steam.NewSockets();
-            GameServerSocket = Steam.NewSocketsGameServer();
+
             messageBuffer = Marshal.AllocHGlobal( MaxMessages * IntPtr.Size );
+            oneMessageBuffer = Marshal.AllocHGlobal( IntPtr.Size );
         }
 
         public void Release()
         {
             Steam.GameNetworkingSockets_Kill();
             Marshal.AllocHGlobal( messageBuffer );
+            Marshal.AllocHGlobal( oneMessageBuffer );
         }
 
         #region Connections CRUD
 
-        public bool RemoveConnection( HSteamNetConnection id )
+        public bool CloseConn( HSteamNetConnection id )
         {
+            if( Conns.ContainsKey( id ) )
+            {
+                Conns[id].Close();
+            }
+
             return Conns.Remove( id );
         }
 
-        public bool AddConn( HSteamNetConnection id )
+        public Connection AddConn( HSteamNetConnection id )
         {
             if( id == Constants.k_HSteamNetConnection_Invalid )
             {
-                return false;
+                return null;
             }
 
-            Conns.Add( id, new Connection( id ) );
-            return true;
+            if( Conns.ContainsKey( id ) )
+            {
+                return Conns[id];
+            }
+            var newConn = new Connection( id, this );
+            Conns.Add( id, newConn );
+            return newConn;
         }
 
         public Connection TryGet( HSteamNetConnection id )
@@ -106,6 +100,16 @@ namespace SteamNetworkingSockets
             return false;
         }
 
+        public Connection GetOrCreateLocalConn()
+        {
+            if( localConn == null )
+            {
+                localConn = new LocalConnection( 0, this );
+            }
+
+            return localConn;
+        }
+
         #endregion
 
         #region MessageHandle
@@ -127,8 +131,8 @@ namespace SteamNetworkingSockets
             var ptr = messageBuffer.ToInt64();
             for( int i = 0; i < num; i++ )
             {
-                //unity C# version is too low to have Add() method, use this to replace
                 IntPtr messagePtr = (IntPtr)(ptr + IntPtr.Size * i);
+                //IntPtr messagePtr = IntPtr.Add( messageBuffer, IntPtr.Size * i );
                 int size = (int)Steam.GetMessageSize( messagePtr );
                 if( size == 0 )
                 {
@@ -160,7 +164,6 @@ namespace SteamNetworkingSockets
             var ptr = messageBuffer.ToInt64();
             for( int i = 0; i < num; i++ )
             {
-                //unity C# version is too low to have Add() method, use this to replace
                 IntPtr messagePtr = (IntPtr)(ptr + IntPtr.Size * i);
                 int size = (int)Steam.GetMessageSize( messagePtr );
                 if( size == 0 )
@@ -192,15 +195,21 @@ namespace SteamNetworkingSockets
             return Steam.CreateListenSocket( UserSocket, nSteamConnectVirtualPort, nIP, nPort );
         }
 
-        public HSteamNetConnection Connect( uint nIP, ushort nPort )
+        public Connection Connect( uint nIP, ushort nPort )
         {
             HSteamNetConnection conId = Steam.ConnectByIPv4Address( UserSocket, nIP, nPort );
-            return conId;
+            return AddConn( conId );
         }
 
         public void Tick()
         {
             Steam.TickCallBacks( UserSocket );
+            HandleConnectEvents();
+            ForwardMessage();
+        }
+
+        void HandleConnectEvents()
+        {
             while( true )
             {
                 var closeId = Steam.HandleConnectionClose();
@@ -209,8 +218,7 @@ namespace SteamNetworkingSockets
                     break;
                 }
 
-                Console.WriteLine( "close:{0}", closeId );
-                RemoveConnection( closeId );
+                CloseConn( closeId );
             }
 
             while( true )
@@ -221,7 +229,6 @@ namespace SteamNetworkingSockets
                     break;
                 }
 
-                Console.WriteLine( "knock:{0}", knockId );
                 Steam.AcceptConnection( knockId );
                 AddConn( knockId );
             }
@@ -234,8 +241,44 @@ namespace SteamNetworkingSockets
                     break;
                 }
 
-                Console.WriteLine( "connected:{0}", connectId );
                 TrySet( connectId, true );
+            }
+        }
+
+        void ForwardMessage()
+        {
+            foreach( var conn in Conns.Values )
+            {
+                var messages = ReceiveMessagesOnConnection( conn.ID );
+                foreach( var msg in messages )
+                {
+                    conn.forward( msg );
+                }
+            }
+        }
+
+        void serverCallBack( Connection conn )
+        {
+            byte[] rsp = System.Text.Encoding.Default.GetBytes( "OK" );
+            conn.Send( rsp );
+        }
+
+        //
+        public void ProcessPacket()
+        {
+            foreach( var conn in Conns.Values )
+            {
+                while( true )
+                {
+                    var packet = conn.Receive();
+                    if( conn.IsEmptyPacket( packet ) )
+                    {
+                        break;
+                    }
+
+                    serverCallBack( conn );
+                    Console.WriteLine( "recv:{0}", System.Text.Encoding.Default.GetString( packet ) );
+                }
             }
         }
     }

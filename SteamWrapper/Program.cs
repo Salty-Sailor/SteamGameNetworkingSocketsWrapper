@@ -1,5 +1,5 @@
-﻿using System;
-using SteamNetworkingSockets;
+﻿using System.Threading.Tasks;
+using System.Threading;
 using SteamWrapper.Test;
 
 namespace SteamWrapper
@@ -8,7 +8,13 @@ namespace SteamWrapper
     {
         static void Main()
         {
-            TestSteam.ManagerTest();
+            Task.Run( () =>{
+                TestSteam.TestServer();
+            });
+            
+            Thread.Sleep( 100 );
+
+            TestSteam.TestClient();
         }
     }
 }
