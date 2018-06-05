@@ -6,7 +6,8 @@ namespace SteamWrapper.Test
 {
     public static class TestSteam
     {
-        static uint nConnectIP = 0x7f000001;//127.0.0.1
+        static uint nConnectIP = 0;//0.0.0.0
+        //static uint nConnectIP = 2887418821;
         static ushort nPort = 27200;
 
         public static void TestServer()

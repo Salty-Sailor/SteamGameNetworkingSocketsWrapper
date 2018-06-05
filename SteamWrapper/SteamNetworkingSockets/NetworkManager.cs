@@ -19,7 +19,7 @@ namespace SteamNetworkingSockets
         private bool isClient;
         private bool isServer;
 
-        private string initRs = "";
+        private IntPtr initRs = Marshal.AllocHGlobal(1024);
         private IntPtr messageBuffer;
         private IntPtr oneMessageBuffer;
 
@@ -28,10 +28,10 @@ namespace SteamNetworkingSockets
 
         public NetworkManager( bool isClient, bool isServer )
         {
-            Steam.GameNetworkingSockets_Init( ref initRs );
-            if( initRs.Length > 0 )
+            var r = Steam.GameNetworkingSockets_Init(initRs);
+            if (!r)
             {
-                Console.WriteLine( "Init Steam GameNetworkingSockets Err:{0}", initRs );
+                Console.WriteLine("Init Steam GameNetworkingSockets Err:{0}", initRs);
                 return;
             }
 
@@ -118,7 +118,7 @@ namespace SteamNetworkingSockets
         {
             IntPtr unmanagedPointer = Marshal.AllocHGlobal( pData.Length );
             Marshal.Copy( pData, 0, unmanagedPointer, pData.Length );
-            var rs = Steam.SendMessageToConnection( hConn, unmanagedPointer, cbData, sendType );
+            var rs = Steam.SendMessageToConnection(UserSocket, hConn, unmanagedPointer, cbData, sendType );
             Marshal.FreeHGlobal( unmanagedPointer );
             return rs;
         }
@@ -127,7 +127,7 @@ namespace SteamNetworkingSockets
         {
             nMaxMessages = nMaxMessages > MaxMessages ? MaxMessages : nMaxMessages;
             var rs = new List<byte[]>();
-            int num = Steam.ReceiveMessagesOnConnection( hConn, messageBuffer, nMaxMessages );
+            int num = Steam.ReceiveMessagesOnConnection(UserSocket, hConn, messageBuffer, nMaxMessages );
             var ptr = messageBuffer.ToInt64();
             for( int i = 0; i < num; i++ )
             {
@@ -160,7 +160,7 @@ namespace SteamNetworkingSockets
         {
             nMaxMessages = nMaxMessages > MaxMessages ? MaxMessages : nMaxMessages;
             var rs = new List<byte[]>();
-            int num = Steam.ReceiveMessagesOnListenSocket( hSocket, messageBuffer, nMaxMessages );
+            int num = Steam.ReceiveMessagesOnListenSocket(UserSocket, hSocket, messageBuffer, nMaxMessages );
             var ptr = messageBuffer.ToInt64();
             for( int i = 0; i < num; i++ )
             {
@@ -229,7 +229,7 @@ namespace SteamNetworkingSockets
                     break;
                 }
 
-                Steam.AcceptConnection( knockId );
+                Steam.AcceptConnection(UserSocket, knockId );
                 AddConn( knockId );
             }
 
