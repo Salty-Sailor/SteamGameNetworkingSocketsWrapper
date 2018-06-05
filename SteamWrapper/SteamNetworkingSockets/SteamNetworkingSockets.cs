@@ -7,8 +7,12 @@ namespace SteamNetworkingSockets
 {
     public static class Steam
     {
+        //暂时不支持Linux
+#if WIN
         const string DllPath = @"C:\Users\xlt\WorkSpace\SteamGameNetworkingSocketsWrapper\SteamWrapper\GameNetworkingSockets.dll";
-
+#else
+         const string DllPath = "libGameNetworkingSockets";
+#endif
         [DllImport(DllPath, EntryPoint = "GameNetworkingSockets_Init", ThrowOnUnmappableChar = true)]
         public static extern bool GameNetworkingSockets_Init(IntPtr reason);
 

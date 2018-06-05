@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <Platforms>AnyCPU;x86;x64</Platforms>
+    <Platforms>AnyCPU;x64</Platforms>
+    <DefineConstants Condition="'$(OS)' == 'Windows_NT' Or '$(targetOS)' == 'Windows_NT'">WIN</DefineConstants>
   </PropertyGroup>
 </Project>
